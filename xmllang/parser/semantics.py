@@ -8,8 +8,8 @@ from distutils.util import strtobool
 
 c = re.compile
 
-Patterns = (c(r"True|False|None"), c(r"^(?=.)([+-]?([0-9]*)(\.([0-9]+))?)$"))
-Literals = (ast.NameConstant, ast.Num)
+Patterns = (c(r"True|False|None"), c(r"^(?=.)([+-]?([0-9]*)(\.([0-9]+))?)$"), r"\.\.\.")
+Literals = (ast.NameConstant, ast.Num, ast.Ellipsis)
 AstMap   = tuple(zip(Patterns, Literals))
 
 AnyAst = NewType('Any AST Object', ast.AST)
@@ -51,6 +51,7 @@ class ElementDecl(ExprDecl):
             
         casts = self.element.attrib.get('cast')
         value = self.element.text.strip()
+        
         if casts:
             if hasattr(ast, casts.title()):
                 return getattr(ast, casts.title())(value)
@@ -60,7 +61,11 @@ class ElementDecl(ExprDecl):
         for pattern, literal in AstMap:
             match = re.match(pattern, value)
             if match:
-                return literal(self.__class__.typecast(match, literal))
+                val = self.__class__.typecast(match, literal)
+                if val:
+                    return literal(val)
+                else:
+                    return literal()
         else:
             return ast.Str(value)
     

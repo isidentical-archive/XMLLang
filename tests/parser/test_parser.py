@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 
 from pathlib import Path
 from astor.code_gen import to_source
+from astpretty import pprint
 from xmllang.parser import Parser
 
 PATH = Path(__file__).parent / "demo"
@@ -25,11 +26,13 @@ class TestParserBasicExpr(unittest.TestCase):
                 ast.Expr(ast.Num(15)),
                 ast.Expr(ast.Num(15.5)),
                 ast.Expr(ast.Str("13")),
+                ast.Expr(ast.Ellipsis()),
             ]
         )
         ast.fix_missing_locations(mymodule)
         mycode = compile(mymodule, "<ast>", "exec")
-
+        pprint(mymodule)
+        
         self.assertEqual(code, mycode)
 
     def test_sequence_types(self):
