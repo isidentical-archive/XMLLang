@@ -6,6 +6,14 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 class SemanticMod(Enum):
+    """Type of semantic declaration.
+    
+    - If semantic has no inside text it uses :py:class:`SemanticMod`.NO_TEXT* family
+    - If semantic has no inside text but it has child elements it uses :py:class:`SemanticMod`.SUB_ELM* family
+    - If semantic has text it uses :py:class:`SemanticMod`.TEXT* family
+    
+    And none of this is suitable for that semantic it uses an escape type, :py:class:`SemanticMod`.EXPR
+    """
     NO_TEXT = auto()
     NO_TEXT_ATTR = auto() # <coding style="utf8" /> 
     

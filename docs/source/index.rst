@@ -1,16 +1,20 @@
-.. XMLLang documentation master file, created by
-   sphinx-quickstart on Sun Jan 13 14:38:49 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to XMLLang's documentation!
 ===================================
 
+XMLLang is a simple programming language that uses XML syntax 
+and compiles to python bytecode. 
+
+XMLLang.parser parses XML files with python's built-in xml parser
+than generates a CST. Uses python's built-in AST module to transform
+XMLLang CST to Python AST. 
+
+XMLLang.compiler compiles generated python AST with python's built-in bytecode
+compiler functions and executes it on CPython VM.
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :glob:
 
-
+   pages/*
 
 Indices and tables
 ==================

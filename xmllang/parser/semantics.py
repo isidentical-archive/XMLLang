@@ -28,7 +28,6 @@ class ExprDecl:
     def __init__(self, expr):
         self.expr = expr
         self.element = expr.expr
-        gendoc(self.__class__)
         
     def make(self) -> None:
         pass
@@ -38,15 +37,7 @@ class ExprDecl:
 
 @SemanticRule.register
 class ElementDecl(ExprDecl):
-    """Element declaration, consists from values.
-    ```xml
-    <e>15</e>
-    <e>Batuhan</e>
-    <e cast="str">15</e>
-    ```
-    
-    Casts -> str or num
-    """
+    """Element declaration, consists from values."""
     
     _type = SemanticType('Element', SemanticMod.TEXT_ATTR)
     
@@ -106,16 +97,7 @@ class SequenceDecl(ExprDecl):
 
 @SemanticRule.register
 class ListDecl(SequenceDecl, ExprDecl):
-    """List declaration
-    ```xmllang
-    <list>
-        <e>15</e>
-        <e>Batuhan</e>
-    </list>
-    ```
-    
-    ctx -> load or store (default: load)
-    """
+    """List declaration"""
         
     _type = SemanticType('List', SemanticMod.SUB_ELM_ATTR)
     
@@ -124,16 +106,8 @@ class ListDecl(SequenceDecl, ExprDecl):
 
 @SemanticRule.register
 class TupleDecl(SequenceDecl, ExprDecl):
-    """Tuple Declaration
-    ```xmllang
-    <tuple>
-        <e>15</e>
-        <e>Batuhan</e>
-    </tuple>
+    """Tuple Declaration"""
     
-    ctx -> load or store (default: load)
-    ```
-    """
     _type = SemanticType('Tuple', SemanticMod.SUB_ELM_ATTR)
     
     def make(self) -> ast.Tuple:
@@ -141,16 +115,7 @@ class TupleDecl(SequenceDecl, ExprDecl):
         
 @SemanticRule.register
 class SetDecl(SequenceDecl, ExprDecl):
-    """Set declaration
-    ```xmllang
-    <set>
-        <e>15</e>
-        <e>Batuhan</e>
-    </set>
-    ```xmllang
-    
-    ctx -> load or store (default: load)
-    """
+    """Set declaration"""
     
     _type = SemanticType('Set', SemanticMod.SUB_ELM_ATTR)
     
@@ -178,21 +143,7 @@ class MappingDecl(ExprDecl):
         
 @SemanticRule.register
 class DictDecl(MappingDecl, ExprDecl):
-    """Dict declaration
-    ```xmllang
-    <dict>
-        <item name="name">Batuhan</item>
-        <item name="age">15</item>
-        <item name="friend">
-            <dict>
-                <item name="name">Osman</item>
-                <item name="age">15</item>
-                <item name="friend">None</item>
-            </dict>
-        </item>
-    </dict>
-    ```
-    """
+    """Dict declaration"""
     
     _type = SemanticType('Dict', SemanticMod.SUB_ELM_ATTR)
     
@@ -201,15 +152,7 @@ class DictDecl(MappingDecl, ExprDecl):
         
 @SemanticRule.register
 class DictItemDecl(ElementDecl, ExprDecl):
-    """Dict Item declaration
-    ```xmllang
-    ...
-        <item name="age">15</item>
-    ...
-    ```
-    
-    name -> key for value
-    """
+    """Dict Item declaration"""
     
     _type = SemanticType('DictItem', SemanticMod.TEXT_ATTR)
     
