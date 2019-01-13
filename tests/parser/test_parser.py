@@ -27,6 +27,8 @@ class TestParserBasicExpr(unittest.TestCase):
                 ast.Expr(ast.Num(15.5)),
                 ast.Expr(ast.Str("13")),
                 ast.Expr(ast.Ellipsis()),
+                ast.Expr(ast.Bytes(bytes('a', 'ASCII'))),
+                ast.Expr(ast.Bytes(bytes('ş', 'utf-8'))),
             ]
         )
         ast.fix_missing_locations(mymodule)

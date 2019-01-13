@@ -4,4 +4,6 @@
     <e>15.5</e>
     <e cast="str">13</e>
     <e>...</e>
+    <e cast="bytes" encoding="ASCII">a</e>
+    <e cast="bytes">\xc5\x9f</e>
 </xmllang>
