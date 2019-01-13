@@ -53,10 +53,13 @@ class ElementDecl(ExprDecl):
         value = self.element.text.strip()
         
         if casts:
+            if casts == 'bytes':
+                value = bytes(value, self.element.attrib.get('encoding', 'utf-8'))
+            
             if hasattr(ast, casts.title()):
                 return getattr(ast, casts.title())(value)
             else:
-                raise SyntaxError("Element's cast attribute must be str or num")
+                raise SyntaxError(f"Couldn't cast to {casts}")
         
         for pattern, literal in AstMap:
             match = re.match(pattern, value)
