@@ -1,0 +1,42 @@
+<xmllang version="0.1">
+    <list>
+        <e>Batuhan</e>
+        <e>123</e>
+        <e>323.23</e>
+        <e>
+            <list>
+                <e>235</e>
+                <e>
+                    <tuple>
+                        <e cast="str">15</e>
+                        <set>
+                            <e>1</e>
+                            <e>2</e>
+                            <e>3</e>
+                        </set>
+                    </tuple>
+                </e>
+            </list>
+        </e>
+    </list>
+    <list>
+        <e>Osman</e>
+        <e>321</e>
+        <e>3333.333</e>
+        <e>
+            <list>
+                <e>532</e>
+                <e>
+                    <tuple>
+                        <e cast="str">51</e>
+                        <set>
+                            <e>3</e>
+                            <e>2</e>
+                            <e>1</e>
+                        </set>
+                    </tuple>
+                </e>
+            </list>
+        </e>
+    </list>
+</xmllang>

@@ -1,0 +1,18 @@
+<xmllang version="0.1">
+    <dict>
+        <item name="name">Batuhan</item>
+        <item name="age">15</item>
+        <item name="address">
+            <dict>
+                <item name="country">Turkey</item>
+                <item name="city">
+                    <dict>
+                        <item name="primary">Mersin</item>
+                        <item name="secondary">Konya</item>
+                    </dict>
+                </item>
+                <item name="postalcode">3333</item>
+            </dict>
+        </item>
+    </dict>
+</xmllang>
