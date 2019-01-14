@@ -169,6 +169,19 @@ class DictItemDecl(ElementDecl, ExprDecl):
         value = super().make()
         
         return key, value
+
+@SemanticRule.register
+class NameDecl(ElementDecl, ExprDecl):
+    """Name declaration"""
+    
+    _type = SemanticType('Name', SemanticModUnion[SemanticMod.TEXT_ATTR, SemanticMod.NO_TEXT_ATTR])
+    
+    def make(self) -> ast.Name:
+        text = self.element.text
+        if text is None:
+            return ast.Name(self.element.tag, ast.Load())
+        else:
+            return ast.Assign([ast.Name(self.element.tag, ast.Store())], super().make())
         
 SemanticMap = {
     'e': ElementDecl,

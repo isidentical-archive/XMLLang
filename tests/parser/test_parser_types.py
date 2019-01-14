@@ -10,9 +10,9 @@ from xmllang.parser import Parser
 PATH = Path(__file__).parent / "demo"
 
 
-class TestParserBasicExpr(unittest.TestCase):
+class TestParserTypes(unittest.TestCase):
     def get_xml(self, name):
-        return ET.parse(PATH / "test_parser_basic_expr" / name)
+        return ET.parse(PATH / "test_parser_types" / name)
 
     def test_simple_types(self):
         # string, integer, float, force casting

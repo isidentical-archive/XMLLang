@@ -24,7 +24,13 @@ class SemanticMod(Enum):
     TEXT_ATTR = auto() # <e>ABC</e>
 
     EXPR = auto() # Escape method like typing.Any
-    
+
+class ModUnion:
+    def __getitem__(self, *args):
+        pass
+
+SemanticModUnion = ModUnion()
+
 @dataclass
 class SemanticType:
     name: str

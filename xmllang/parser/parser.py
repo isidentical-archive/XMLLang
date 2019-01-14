@@ -11,8 +11,20 @@ from typing import Dict, List, Sequence, Optional
 from pprint import pprint
 from reprlib import recursive_repr
 
-from xmllang.parser.semantics import SemanticMap
+from xmllang.parser.semantics import SemanticMap, NameDecl
 
+
+AST_CONS_MAP = (
+    ast.Assign,
+    ast.AnnAssign,
+    ast.AugAssign,
+    ast.Raise,
+    ast.Assert,
+    ast.Delete,
+    ast.Pass,
+    ast.Import,
+    ast.ImportFrom
+)
 
 @dataclass(unsafe_hash=True)
 class XMLExpr:
@@ -80,7 +92,10 @@ class Parser:
             
         content = []
         for expr in xmlast[0]:
-            content.append(ast.Expr(expr.value))
+            if isinstance(expr.value, AST_CONS_MAP):
+                content.append(expr.value)
+            else:
+                content.append(ast.Expr(expr.value))
         
         module = ast.Module(content)
         ast.fix_missing_locations(module)
@@ -112,7 +127,11 @@ class Parser:
             return ctx
 
     def xmleval(self, expr: XMLExpr) -> ast.AST:
-        semantic = SemanticMap[expr.expr.tag](expr)
+        try:
+            semantic = SemanticMap[expr.expr.tag](expr)
+        except KeyError:
+            # raise NotImplementedError or set semantic to a NameDecl instance
+            semantic = NameDecl(expr)
         ast = semantic.make()
         return ast
         
