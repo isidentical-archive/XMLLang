@@ -6,5 +6,5 @@ setup(
     author="BTaskaya",
     author_email="batuhanosmantaskaya@gmail.com",
     packages=find_packages(),
-    url='https://git.kernel.live/btaskaya/xmllang'
+    url="https://git.kernel.live/btaskaya/xmllang",
 )

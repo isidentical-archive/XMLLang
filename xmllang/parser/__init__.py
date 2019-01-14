@@ -6,4 +6,4 @@ that contains a python AST.
 
 from xmllang.parser.parser import Parser
 
-__all__ = ['Parser']
+__all__ = ["Parser"]
