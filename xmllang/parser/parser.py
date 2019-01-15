@@ -11,7 +11,7 @@ from typing import Dict, List, Sequence, Optional
 from pprint import pprint
 from reprlib import recursive_repr
 
-from xmllang.parser.semantics import SemanticMap, NameDecl
+from xmllang.parser.semantics import SemanticMap, get_decl
 
 
 AST_CONS_MAP = (
@@ -136,12 +136,8 @@ class Parser:
             return ctx
 
     def xmleval(self, expr: XMLExpr) -> ast.AST:
-        try:
-            semantic = SemanticMap[expr.expr.tag](expr)
-        except KeyError:
-            # raise NotImplementedError or set semantic to a NameDecl instance
-            semantic = NameDecl(expr)
-        ast = semantic.make()
+        decl = get_decl(expr.expr.tag)(expr)
+        ast = decl.make()
         return ast
 
     def __str__(self):

@@ -1,0 +1,7 @@
+<xmllang version="0.1">
+    <name>Batuhan</name>
+    <age>15</age>
+    <print call="True">
+        <e f="True">Benim adım «name», yaşım «age».</e>
+    </print>
+</xmllang>

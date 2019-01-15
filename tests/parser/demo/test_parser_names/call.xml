@@ -1,0 +1,8 @@
+<xmllang version="0.1">
+    <print call="True"></print>
+    <print call="True">
+        <e>ABC</e>
+        <e>BCD</e>
+        <item name="sep">XY</item>
+    </print>
+</xmllang>

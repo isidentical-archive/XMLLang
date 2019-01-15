@@ -32,6 +32,28 @@ class TestParserNames(unittest.TestCase):
 
         self.assertEqual(code, mycode)
 
+    def test_basic_call(self):
+        xml = Parser(self.get_xml("call.xml"))
+        module = xml.parse()
+        code = compile(module, "<ast>", "exec")
+
+        mymodule = ast.Module(
+            [
+                ast.Expr(ast.Call(ast.Name("print", ast.Load()), [], [])),
+                ast.Expr(
+                    ast.Call(
+                        ast.Name("print", ast.Load()),
+                        [ast.Str("ABC"), ast.Str("BCD")],
+                        [ast.keyword("sep", ast.Str("XY"))],
+                    )
+                ),
+            ]
+        )
+        ast.fix_missing_locations(mymodule)
+        mycode = compile(mymodule, "<ast>", "exec")
+
+        self.assertEqual(code, mycode)
+
 
 if __name__ == "__main__":
     unittest.main()

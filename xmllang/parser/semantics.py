@@ -17,6 +17,7 @@ LiteralType = NewType("AST Literal", Union[Literals])
 SequenceType = NewType("AST Sequence", Union[ast.List, ast.Tuple, ast.Set])
 MappingType = NewType("AST Mapping", ast.Dict)
 
+FStringPattern = c('«(.*?)»')
 
 @SemanticRule.register
 class ExprDecl:
@@ -45,9 +46,11 @@ class ElementDecl(ExprDecl):
 
     def make(self) -> AnyAst:
         if len(self.element) != 0:
-            if len(self.expr.children) == 1:
+            if strtobool(self.element.attrib.get("f", "false")):
+                raise NotImplementedError("FStrings are not implemented")
+            elif len(self.expr.children) == 1:
                 ex = self.expr.children[0]
-                return SemanticMap[ex.expr.tag](ex).make()
+                return get_decl(ex.expr.tag)(ex).make()
             else:
                 raise SyntaxError("Unkown behaivor")
 
@@ -66,7 +69,7 @@ class ElementDecl(ExprDecl):
         for pattern, literal in AstMap:
             match = re.match(pattern, value)
             if match:
-                val = self.__class__.typecast(match, literal)
+                val = self.typecast(match, literal)
                 if val:
                     return literal(val)
                 else:
@@ -90,7 +93,15 @@ class ElementDecl(ExprDecl):
                 return int(m)
         else:
             return None
-
+    
+    def fstring(self) -> ast.JoinedStr:
+        text = self.element.text
+        
+        if isinstance(text, str):
+            text = text.strip()
+    
+        if not text:
+            raise SyntaxError("F Strings must be a valid string")
 
 class SequenceDecl(ExprDecl):
 
@@ -195,10 +206,36 @@ class NameDecl(ElementDecl, ExprDecl):
 
     def make(self) -> ast.Name:
         text = self.element.text
-        if text is None:
-            return ast.Name(self.element.tag, ast.Load())
+        call = strtobool(self.element.attrib.get("call", "False"))
+
+        if isinstance(text, str):
+            text = text.strip()
+            
+        if not text:
+            val = ast.Name(self.element.tag, ast.Load())
+            if call:
+                if len(self.element) == 0:
+                    return ast.Call(val, [], [])
+                else:
+                    return ast.Call(val, *self.get_spec())
+            else:
+                return val
         else:
             return ast.Assign([ast.Name(self.element.tag, ast.Store())], super().make())
+    
+    def get_spec(self) -> Tuple:
+        args = []
+        kwargs = []
+        
+        for e in self.expr.children:
+            e = e.value
+            if isinstance(e, tuple):
+                kwargs.append(ast.keyword(e[0].s, e[1]))
+            else:
+                args.append(e)
+        
+        
+        return args, kwargs
 
 
 SemanticMap = {
@@ -209,3 +246,9 @@ SemanticMap = {
     "dict": DictDecl,
     "item": DictItemDecl,
 }
+
+def get_decl(tag):
+    try:
+        return SemanticMap[tag]
+    except KeyError:
+        return NameDecl
