@@ -221,17 +221,15 @@ class NameDecl(ElementDecl, ExprDecl):
     def make(self) -> ast.Name:
         text = self.element.text
         call = strtobool(self.element.attrib.get("call", "False"))
-
+        
         if isinstance(text, str):
             text = text.strip()
 
         if not text:
             val = ast.Name(self.element.tag, ast.Load())
+            spec = self.get_spec()
             if call:
-                if len(self.element) == 0:
-                    return ast.Call(val, [], [])
-                else:
-                    return ast.Call(val, *self.get_spec())
+                return ast.Call(val, *spec)
             else:
                 return val
         else:
@@ -242,15 +240,20 @@ class NameDecl(ElementDecl, ExprDecl):
         kwargs = []
 
         for e in self.expr.children:
-            e = e.value
-            if isinstance(e, tuple):
-                kwargs.append(ast.keyword(e[0].s, e[1]))
+            v = e.value
+            if e.expr.tag == 'attr':
+                self.add_attr(e)
             else:
-                args.append(e)
+                if isinstance(v, tuple):
+                    kwargs.append(ast.keyword(v[0].s, v[1]))
+                else:
+                    args.append(v)
 
         return args, kwargs
-
-
+    
+    def add_attr(self, attr) -> None:
+        pass
+        
 SemanticMap = {
     "e": ElementDecl,
     "list": ListDecl,
