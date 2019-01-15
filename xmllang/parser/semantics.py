@@ -2,9 +2,11 @@ import ast
 import re
 import operator
 
-from xmllang.parser.semantic import *
 from typing import Union, NewType, Sequence, Tuple, List
+from itertools import chain
+from functools import partial
 from distutils.util import strtobool
+from xmllang.parser.semantic import *
 
 c = re.compile
 
@@ -17,7 +19,6 @@ LiteralType = NewType("AST Literal", Union[Literals])
 SequenceType = NewType("AST Sequence", Union[ast.List, ast.Tuple, ast.Set])
 MappingType = NewType("AST Mapping", ast.Dict)
 
-FStringPattern = c('«(.*?)»')
 
 @SemanticRule.register
 class ExprDecl:
@@ -47,7 +48,8 @@ class ElementDecl(ExprDecl):
     def make(self) -> AnyAst:
         if len(self.element) != 0:
             if strtobool(self.element.attrib.get("f", "false")):
-                raise NotImplementedError("FStrings are not implemented")
+                return FStringDecl(self.expr)
+                # raise NotImplementedError("FStrings are not implemented")
             elif len(self.expr.children) == 1:
                 ex = self.expr.children[0]
                 return get_decl(ex.expr.tag)(ex).make()
@@ -93,15 +95,27 @@ class ElementDecl(ExprDecl):
                 return int(m)
         else:
             return None
-    
-    def fstring(self) -> ast.JoinedStr:
+
+
+class FStringDecl(ExprDecl):
+    def make(self) -> ast.JoinedStr:
         text = self.element.text
-        
+
         if isinstance(text, str):
             text = text.strip()
-    
-        if not text:
-            raise SyntaxError("F Strings must be a valid string")
+
+        base = [ast.Str(text)] if text else []
+        children = map(
+            partial(ast.FormattedValue, conversion=-1, format_spec=None),
+            map(operator.attrgetter("value"), self.expr.children),
+        )
+        texts = map(
+            ast.Str, map(str.strip, map(operator.attrgetter("tail"), self.element))
+        )
+        base.extend(chain.from_iterable(zip(children, texts)))
+
+        return ast.JoinedStr(base)
+
 
 class SequenceDecl(ExprDecl):
 
@@ -210,7 +224,7 @@ class NameDecl(ElementDecl, ExprDecl):
 
         if isinstance(text, str):
             text = text.strip()
-            
+
         if not text:
             val = ast.Name(self.element.tag, ast.Load())
             if call:
@@ -222,19 +236,18 @@ class NameDecl(ElementDecl, ExprDecl):
                 return val
         else:
             return ast.Assign([ast.Name(self.element.tag, ast.Store())], super().make())
-    
+
     def get_spec(self) -> Tuple:
         args = []
         kwargs = []
-        
+
         for e in self.expr.children:
             e = e.value
             if isinstance(e, tuple):
                 kwargs.append(ast.keyword(e[0].s, e[1]))
             else:
                 args.append(e)
-        
-        
+
         return args, kwargs
 
 
@@ -245,7 +258,9 @@ SemanticMap = {
     "set": SetDecl,
     "dict": DictDecl,
     "item": DictItemDecl,
+    "fstring": FStringDecl,
 }
+
 
 def get_decl(tag):
     try:

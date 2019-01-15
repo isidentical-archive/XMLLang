@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from astor.code_gen import to_source
 from astpretty import pprint
+from textwrap import dedent
 from xmllang.parser import Parser
 
 PATH = Path(__file__).parent / "demo"
@@ -141,6 +142,63 @@ class TestParserTypes(unittest.TestCase):
 
         self.assertEqual(code, mycode)
 
-
+    def test_fstring(self):
+        xml = Parser(self.get_xml("dict.xml"))
+        module = xml.parse()
+        code = compile(module, "<ast>", "exec")
+        
+        mymodule = ast.Module(
+            [
+                ast.Assign(
+                    [ast.Name('name', ast.Store())],
+                    ast.Str('Batuhan')
+                ),
+                ast.Assign(
+                    [ast.Name('age', ast.Store())],
+                    ast.Num(15)
+                ),
+                ast.Expr(
+                    ast.Call(
+                        ast.Name('print', ast.Load()),
+                        [
+                            ast.JoinedStr(
+                                values=[
+                                    ast.Str(s='Benim adım'),
+                                    ast.FormattedValue(
+                                        value=ast.Name(id='name', ctx=ast.Load()),
+                                        conversion=-1,
+                                        format_spec=None,
+                                    ),
+                                    ast.Str(s=', yaşım'),
+                                    ast.FormattedValue(
+                                        value=ast.Name(id='age', ctx=ast.Load()),
+                                        conversion=-1,
+                                        format_spec=None,
+                                    ),
+                                    ast.Str(s='. Hakkımda geri kalan bilgi:'),
+                                    ast.FormattedValue(
+                                        value=ast.Call(
+                                            func=ast.Name(id='str', ctx=ast.Load()),
+                                            args=[ast.Num(n=235)],
+                                            keywords=[],
+                                        ),
+                                        conversion=-1,
+                                        format_spec=None,
+                                    ),
+                                    ast.Str(s=''),
+                                ]
+                            )
+                        ],
+                        []
+                    )
+                )
+            ]
+        )
+        ast.fix_missing_locations(mymodule)
+        pprint(module)
+        mycode = compile(mymodule, "<ast>", "exec")
+        
+        self.assertEqual(code, mycode)
+        
 if __name__ == "__main__":
     unittest.main()

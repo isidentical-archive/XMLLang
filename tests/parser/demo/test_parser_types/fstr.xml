@@ -2,6 +2,9 @@
     <name>Batuhan</name>
     <age>15</age>
     <print call="True">
-        <e f="True">Benim adım «name», yaşım «age».</e>
+        <fstring>
+            Benim adım <name />, yaşım <age />. Hakkımda geri kalan bilgi: 
+            <str call="True"><e>235</e></str>
+        </fstring>
     </print>
 </xmllang>
