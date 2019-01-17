@@ -21,7 +21,7 @@ MappingType = NewType("AST Mapping", ast.Dict)
 
 
 @SemanticRule.register
-class ExprDecl:
+class Expr:
     """Expression declaration, everything counts as an expression
     in XMLLang standards.
     """
@@ -40,7 +40,7 @@ class ExprDecl:
 
 
 @SemanticRule.register
-class ElementDecl(ExprDecl):
+class Element(Expr):
     """Element declaration, consists from values."""
 
     _type = SemanticType("Element", SemanticMod.TEXT_ATTR)
@@ -48,7 +48,7 @@ class ElementDecl(ExprDecl):
     def make(self) -> AnyAst:
         if len(self.element) != 0:
             if strtobool(self.element.attrib.get("f", "false")):
-                return FStringDecl(self.expr)
+                return FString(self.expr)
                 # raise NotImplementedError("FStrings are not implemented")
             elif len(self.expr.children) == 1:
                 ex = self.expr.children[0]
@@ -97,7 +97,7 @@ class ElementDecl(ExprDecl):
             return None
 
 
-class FStringDecl(ExprDecl):
+class FString(Expr):
     def make(self) -> ast.JoinedStr:
         text = self.element.text
 
@@ -117,68 +117,68 @@ class FStringDecl(ExprDecl):
         return ast.JoinedStr(base)
 
 
-class SequenceDecl(ExprDecl):
+class Sequence(Expr):
 
     _type = SemanticType("NaRT", SemanticMod.SUB_ELM_ATTR)  # Not a Real Type
 
     def make(self) -> SequenceType:
         pass
 
-    def get_ctx(self) -> Union[ast.Load, ast.Store]:
+    def get_declctx(self) -> Union[ast.Load, ast.Store]:
         return getattr(
             ast,
             self.element.attrib.get("ctx", self.expr.meta.get("ctx", "load")).title(),
             ast.Load,
         )()
 
-    def get_elts(self) -> Sequence[ast.AST]:
+    def get_declelts(self) -> Sequence[ast.AST]:
         return [e.value for e in self.expr.children if isinstance(e.value, ast.AST)]
 
 
 @SemanticRule.register
-class ListDecl(SequenceDecl, ExprDecl):
+class List(Sequence, Expr):
     """List declaration"""
 
     _type = SemanticType("List", SemanticMod.SUB_ELM_ATTR)
 
     def make(self) -> ast.List:
-        return ast.List(self.get_elts(), self.get_ctx())
+        return ast.List(self.get_declelts(), self.get_declctx())
 
 
 @SemanticRule.register
-class TupleDecl(SequenceDecl, ExprDecl):
-    """Tuple Declaration"""
+class Tuple(Sequence, Expr):
+    """Tuple declaration"""
 
     _type = SemanticType("Tuple", SemanticMod.SUB_ELM_ATTR)
 
     def make(self) -> ast.Tuple:
-        return ast.Tuple(self.get_elts(), self.get_ctx())
+        return ast.Tuple(self.get_declelts(), self.get_declctx())
 
 
 @SemanticRule.register
-class SetDecl(SequenceDecl, ExprDecl):
+class Set(Sequence, Expr):
     """Set declaration"""
 
     _type = SemanticType("Set", SemanticMod.SUB_ELM_ATTR)
 
     def make(self) -> ast.Set:
-        return ast.Set(self.get_elts())
+        return ast.Set(self.get_declelts())
 
 
-class MappingDecl(ExprDecl):
+class Mapping(Expr):
     _type = SemanticType("NaRT", SemanticMod.SUB_ELM_ATTR)
 
     def __init__(self, expr):
         super().__init__(expr)
 
-        pairs = self.get_pairs()
+        pairs = self.get_declpairs()
         self.keys = list(map(operator.itemgetter(0), pairs))
         self.values = list(map(operator.itemgetter(1), pairs))
 
     def make(self) -> MappingType:
         pass
 
-    def get_pairs(self) -> List[Tuple[ast.Str, AnyAst]]:
+    def get_declpairs(self) -> List:
         pairs = [
             e.value
             for e in self.expr.children
@@ -188,7 +188,7 @@ class MappingDecl(ExprDecl):
 
 
 @SemanticRule.register
-class DictDecl(MappingDecl, ExprDecl):
+class Dict(Mapping, Expr):
     """Dict declaration"""
 
     _type = SemanticType("Dict", SemanticMod.SUB_ELM_ATTR)
@@ -198,12 +198,12 @@ class DictDecl(MappingDecl, ExprDecl):
 
 
 @SemanticRule.register
-class DictItemDecl(ElementDecl, ExprDecl):
+class DictItem(Element, Expr):
     """Dict Item declaration"""
 
     _type = SemanticType("DictItem", SemanticMod.TEXT_ATTR)
 
-    def make(self) -> Tuple[ast.Str, AnyAst]:
+    def make(self) -> Tuple:
         key = ast.Str(self.element.attrib["name"])
         value = super().make()
 
@@ -211,13 +211,17 @@ class DictItemDecl(ElementDecl, ExprDecl):
 
 
 @SemanticRule.register
-class NameDecl(ElementDecl, ExprDecl):
+class Name(Element, Expr):
     """Name declaration"""
 
     _type = SemanticType(
         "Name", SemanticModUnion[SemanticMod.TEXT_ATTR, SemanticMod.NO_TEXT_ATTR]
     )
-
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attribs = []
+        
     def make(self) -> ast.Name:
         text = self.element.text
         call = strtobool(self.element.attrib.get("call", "False"))
@@ -227,22 +231,32 @@ class NameDecl(ElementDecl, ExprDecl):
 
         if not text:
             val = ast.Name(self.element.tag, ast.Load())
-            spec = self.get_spec()
+            spec = self.get_declspec(self.expr, self.add_attr)
             if call:
-                return ast.Call(val, *spec)
-            else:
-                return val
-        else:
-            return ast.Assign([ast.Name(self.element.tag, ast.Store())], super().make())
+                val = ast.Call(val, *spec)
 
-    def get_spec(self) -> Tuple:
+            if self.attribs:
+                for attr in self.attribs:
+                    val = ast.Attribute(val, attr[0], ast.Load())
+                    
+                    if len(attr) == 2:
+                        val = ast.Call(val, *attr[1])
+            
+            return val
+            
+        else:
+            target = ast.Name(self.element.tag, ast.Store())
+            return ast.Assign([target], super().make())
+
+    @staticmethod
+    def get_declspec(expr, notifier) -> Tuple:
         args = []
         kwargs = []
 
-        for e in self.expr.children:
+        for e in expr.children:
             v = e.value
             if e.expr.tag == 'attr':
-                self.add_attr(e)
+                notifier(e)
             else:
                 if isinstance(v, tuple):
                     kwargs.append(ast.keyword(v[0].s, v[1]))
@@ -250,18 +264,38 @@ class NameDecl(ElementDecl, ExprDecl):
                     args.append(v)
 
         return args, kwargs
-    
-    def add_attr(self, attr) -> None:
-        pass
         
+    def add_attr(self, attr) -> None:
+        val = attr.value
+        self.attribs.append(val)
+
+@SemanticRule.register
+class Attribute(Element, Expr):
+    _type = SemanticType(
+        'Attibute', SemanticMod.SUB_ELM_ATTR
+    )
+    def make(self) -> Tuple:
+        """FYI it doesnt return a real ast.AST, it returns a tuple of python objects
+        that we are going to use in Name.add_attr"""
+        
+        name = self.element.attrib['name'] 
+        call = strtobool(self.element.attrib.get("call", "False"))
+        
+        if call:
+            spec = Name.get_declspec(self.expr, lambda e: None)
+            return name, spec
+        else:
+            return name,
+                
 SemanticMap = {
-    "e": ElementDecl,
-    "list": ListDecl,
-    "tuple": TupleDecl,
-    "set": SetDecl,
-    "dict": DictDecl,
-    "item": DictItemDecl,
-    "fstring": FStringDecl,
+    "e": Element,
+    "list": List,
+    "tuple": Tuple,
+    "set": Set,
+    "dict": Dict,
+    "item": DictItem,
+    "fstring": FString,
+    "attr": Attribute,
 }
 
 
@@ -269,4 +303,4 @@ def get_decl(tag):
     try:
         return SemanticMap[tag]
     except KeyError:
-        return NameDecl
+        return Name
