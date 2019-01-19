@@ -1,18 +1,21 @@
 <xmllang version="0.1">
-    <str>
-        <attr name="__doc__"></attr>
-        <attr name="strip" call="True"></attr>
-        <attr name="split" call="True">
-            <e>;</e>
-            <item name="n">3</item>
-        </attr>
-        <e>3</e>
-    </str>
-    <str>
-        <attr name="__doc__">
-        </attr>
-        <attr name="__doc__">
+    <a>
+        <type call="True">
+            <e>A</e>
+            <e><tuple></tuple></e>
+            <e><dict></dict></e>
+        </type>
+    </a>
+    <a>
+        <attr name="b">
             3
         </attr>
-    </str>
+    </a>
+    <print call="True">
+        <e>
+            <a>
+                <attr name="b"></attr>
+            </a>
+        </e>
+    </print>
 </xmllang>

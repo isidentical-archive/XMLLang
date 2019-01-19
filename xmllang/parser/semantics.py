@@ -232,9 +232,12 @@ class Name(Element, Expr):
         if not text:
             val = ast.Name(self.element.tag, ast.Load())
             spec = self.get_declspec(self.expr, self.add_attr)
+            c = 0
+            
             if call:
                 val = ast.Call(val, *spec)
-
+                c = 1
+            
             if self.attribs:
                 for attr in self.attribs:
                     t = attr[1].text.strip() if isinstance(attr[1].text, str) else None
@@ -245,7 +248,12 @@ class Name(Element, Expr):
                     
                     if len(attr) == 4:
                         val = ast.Call(val, *attr[3])
-
+                c = 1
+                
+            if not c:
+                if len(self.element) == 1:
+                    return ast.Assign([ast.Name(self.element.tag, ast.Store())], Name(self.expr.children[0]).make())
+            
             return val
             
         else:
