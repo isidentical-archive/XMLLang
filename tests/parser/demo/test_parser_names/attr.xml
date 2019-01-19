@@ -8,4 +8,11 @@
         </attr>
         <e>3</e>
     </str>
+    <str>
+        <attr name="__doc__">
+        </attr>
+        <attr name="__doc__">
+            3
+        </attr>
+    </str>
 </xmllang>

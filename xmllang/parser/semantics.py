@@ -237,11 +237,15 @@ class Name(Element, Expr):
 
             if self.attribs:
                 for attr in self.attribs:
-                    val = ast.Attribute(val, attr[0], ast.Load())
+                    t = attr[1].text.strip() if isinstance(attr[1].text, str) else None
+                    if t:
+                        val = ast.Assign([ast.Attribute(val, attr[2], ast.Store())], Element(attr[0]).make())
+                    else:
+                        val = ast.Attribute(val, attr[2], ast.Load())
                     
-                    if len(attr) == 2:
-                        val = ast.Call(val, *attr[1])
-            
+                    if len(attr) == 4:
+                        val = ast.Call(val, *attr[3])
+
             return val
             
         else:
@@ -283,9 +287,9 @@ class Attribute(Element, Expr):
         
         if call:
             spec = Name.get_declspec(self.expr, lambda e: None)
-            return name, spec
+            return self.expr, self.element, name, spec
         else:
-            return name,
+            return self.expr, self.element, name
                 
 SemanticMap = {
     "e": Element,
