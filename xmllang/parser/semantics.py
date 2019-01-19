@@ -217,15 +217,15 @@ class Name(Element, Expr):
     _type = SemanticType(
         "Name", SemanticModUnion[SemanticMod.TEXT_ATTR, SemanticMod.NO_TEXT_ATTR]
     )
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.attribs = []
-        
+
     def make(self) -> ast.Name:
         text = self.element.text
         call = strtobool(self.element.attrib.get("call", "False"))
-        
+
         if isinstance(text, str):
             text = text.strip()
 
@@ -233,29 +233,35 @@ class Name(Element, Expr):
             val = ast.Name(self.element.tag, ast.Load())
             spec = self.get_declspec(self.expr, self.add_attr)
             c = 0
-            
+
             if call:
                 val = ast.Call(val, *spec)
                 c = 1
-            
+
             if self.attribs:
                 for attr in self.attribs:
                     t = attr[1].text.strip() if isinstance(attr[1].text, str) else None
                     if t:
-                        val = ast.Assign([ast.Attribute(val, attr[2], ast.Store())], Element(attr[0]).make())
+                        val = ast.Assign(
+                            [ast.Attribute(val, attr[2], ast.Store())],
+                            Element(attr[0]).make(),
+                        )
                     else:
                         val = ast.Attribute(val, attr[2], ast.Load())
-                    
+
                     if len(attr) == 4:
                         val = ast.Call(val, *attr[3])
                 c = 1
-                
+
             if not c:
                 if len(self.element) == 1:
-                    return ast.Assign([ast.Name(self.element.tag, ast.Store())], Name(self.expr.children[0]).make())
-            
+                    return ast.Assign(
+                        [ast.Name(self.element.tag, ast.Store())],
+                        Name(self.expr.children[0]).make(),
+                    )
+
             return val
-            
+
         else:
             target = ast.Name(self.element.tag, ast.Store())
             return ast.Assign([target], super().make())
@@ -267,7 +273,7 @@ class Name(Element, Expr):
 
         for e in expr.children:
             v = e.value
-            if e.expr.tag == 'attr':
+            if e.expr.tag == "attr":
                 notifier(e)
             else:
                 if isinstance(v, tuple):
@@ -276,29 +282,30 @@ class Name(Element, Expr):
                     args.append(v)
 
         return args, kwargs
-        
+
     def add_attr(self, attr) -> None:
         val = attr.value
         self.attribs.append(val)
 
+
 @SemanticRule.register
 class Attribute(Element, Expr):
-    _type = SemanticType(
-        'Attibute', SemanticMod.SUB_ELM_ATTR
-    )
+    _type = SemanticType("Attibute", SemanticMod.SUB_ELM_ATTR)
+
     def make(self) -> Tuple:
         """FYI it doesnt return a real ast.AST, it returns a tuple of python objects
         that we are going to use in Name.add_attr"""
-        
-        name = self.element.attrib['name'] 
+
+        name = self.element.attrib["name"]
         call = strtobool(self.element.attrib.get("call", "False"))
-        
+
         if call:
             spec = Name.get_declspec(self.expr, lambda e: None)
             return self.expr, self.element, name, spec
         else:
             return self.expr, self.element, name
-                
+
+
 SemanticMap = {
     "e": Element,
     "list": List,
