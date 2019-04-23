@@ -49,7 +49,7 @@ python -m xmllang.compiler exec PATH_TO_XMLFILE.xml
 ```
 
 ### Names
-```
+```xml
 <a>5</a> a = 5
 <print call="True">
     <e>
